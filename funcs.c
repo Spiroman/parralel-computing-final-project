@@ -1,176 +1,88 @@
 #include "funcs.h"
 #include "mpi.h"
+#include <stdio.h>
+#include <limits.h>
+#include "data.h"
 
-char group_one[GROUP_A_ROWS][GROUP_A_COLS] = {
-    "NDEQ",
-    "MILV",
-    "FYW",
-    "NEQK",
-    "QHRK",
-    "HY",
-    "STA",
-    "NHQK",
-    "MILF"};
+#define DEBUG 1
 
-char group_two[GROUP_B_ROWS][GROUP_B_COLS] = {
-    "SAG",
-    "SGND",
-    "NEQHRK",
-    "HFY",
-    "ATV",
-    "STPA",
-    "NDEQHK",
-    "FVLIM",
-    "CSA",
-    "STNK",
-    "SNDEQK"};
-
-// Create data type Results for MPI
-void create_result_type(MPI_Datatype *mpi_results_type)
-{
-    int blockLength[3] = {1, 1, 1}; /*number of blocks for each parameter*/
-    MPI_Aint displacements[3] = {offsetof(Result, n),
-                                 offsetof(Result, k),
-                                 offsetof(Result, score)};
-
-    MPI_Datatype types[3] = {MPI_INT, MPI_INT, MPI_INT};
-    MPI_Type_create_struct(3, blockLength, displacements, types,
-                           mpi_results_type);
-    MPI_Type_commit(mpi_results_type);
+// This function assumes the indices n, and k start with 1 rather than 0
+void create_mutation(char *seq, int n, int k, int len, char *mutation)
+{    
+    // Copy the first part, up to the nth variable.
+    memcpy(mutation, seq, n - 1);
+    // Copy Middle part
+    memcpy(mutation + n - 1, seq + n, k - n - 1);
+    // Copy last part
+    memcpy(mutation + k - 2, seq + k, strlen(seq) - k);
 }
 
-/* Muatation creation
-    Input example: char* seq = HELLO, int k = 1, int len = 5
-    Output: H-ELLO
-*/
-char *mutation(char *seq, int k, int len)
+void find_optimal_mutation_offset(char *baseSeq, char *cmpSeq, int baseSeqLen, int cmpSeqLen, int* weights, int *result)
 {
-    char *mutant_seq = (char *)calloc((len + 2), sizeof(char)); // memory +2 for '-' and '\0'
+    printf("mutating\n");
+    // Determine the number of offsets to try. base - comperative - 2 chars for n&k
+    int numOfOffsets = baseSeqLen - cmpSeqLen - 2;
+    int lenOfAugmented = cmpSeqLen - 2;
+    
+    // Declaration for parrallel executions
+    char *mutation;
+    Result tempResult;
 
-    if (!mutant_seq)
-        return NULL;
+    // We're setting the score to the lowest possible int value. 
+    // Each private copy of the result will hold that score when it starts executing.
+    // This ensures that all threads will catch results that are negative as well as best results. 
+    // And yes, I checked it.
+    tempResult.score = INT_MIN;
 
-    strncpy(mutant_seq, seq, k);
-    mutant_seq[k] = '-';
-    strncpy(mutant_seq + k + 1, seq + k, len - k);
-    mutant_seq[len + 1] = '\0';
+    // Each thread will have it's own copy of the results struct. At the end the maximum result and its values will be returned
+    // In each execution we will check for each pair of mutations, for each possible offset of said mutation, what yields the best score.
+    // Array indices start as 1 instead of 0, and are then adjusted in the mutation creation function.
+    #pragma omp paraller for private(tempResult, mutation) task_reduction(max: tempResult.score)
+    for (int n = 1; n < cmpSeqLen; n++){
+        for (int k = n + 1; k <= cmpSeqLen; k++){
+            for (int offset = 0; offset < numOfOffsets; offset++){
+                // Separate the part of the base sequence with which the comparisons will be made
+                char *baseSeqAugmented = (char *)malloc(sizeof(char) * lenOfAugmented);
+                memcpy(baseSeqAugmented, baseSeq + offset, cmpSeqLen);
 
-    return mutant_seq;
-}
+                // Create the mutation that will be checked
+                char *mutation = (char *)malloc(sizeof(char) * lenOfAugmented);
+                create_mutation(cmpSeq, n, k, lenOfAugmented, mutation);
+                
+                #ifdef DEBUG
+                for(int i = 0; i < lenOfAugmented; i++){
+                    printf("%c", mutation[i]);
+                }
+                printf("\n");
+                #endif
 
-int compare_group_a(char seq1, char seq2)
-{
+                // Create array of partial results depending on match and its weight.
+                int *cmpRes = (int *)malloc(sizeof(int) * lenOfAugmented);
 
-    for (int i = 0; i < GROUP_A_ROWS; i++)
-    {
-        for (int j = 0; j < GROUP_A_COLS; j++)
-        {
-            if (strchr(group_one[i], seq1) && strchr(group_one[i], seq2))
-                return 1;
+                // Send mutation and comparison to be compared and determine matches (will fill the occurances int array).
+                // launch_cuda(baseSeq, mutation, lenOfAugmented, cmpRes, weights);
+                
+                // Calculate score
+                int tempScore = 0;
+                for(int i = 0; i < lenOfAugmented; i++){
+                    tempScore += cmpRes[i];
+                }
+
+                // Compare and assign best result
+                if(tempScore > tempResult.score){
+                    tempResult.score = tempScore;
+                    tempResult.k = k;
+                    tempResult.n = n;
+                    tempResult.offset = offset;
+                }
+                
+                // Free augmented base
+                free(mutation);
+                free(baseSeqAugmented);
+                free(cmpRes);
+            }
         }
     }
-    return 0;
-}
-
-int compare_group_b(char seq1, char seq2)
-{
-    for (int i = 0; i < GROUP_A_ROWS; i++)
-    {
-        for (int j = 0; j < GROUP_A_COLS; j++)
-        {
-            if (strchr(group_two[i], seq1) && strchr(group_two[i], seq2))
-                return 1;
-        }
-    }
-    return 0;
-}
-
-// Comapre two chars
-char compare(char seq1, char seq2)
-{
-
-    if (seq1 == seq2)
-    {
-        return '$';
-    }
-    else if (compare_group_a(seq1, seq2) == 1)
-    {
-        return '%';
-    }
-    else if (compare_group_b(seq1, seq2) == 1)
-    {
-        return '#';
-    }
-    else
-    {
-        return ' ';
-    }
-}
-
-int calc_score(char *seq1, char *seq2, int seq1_len, int seq2_len, int w[WEIGHTS])
-{
-    int weights[WEIGHTS] = {0};
-    int alignment_score = 0;
-    char compare_res;
-
-    for (int i = 0; i < seq2_len; i++)
-    {
-        compare_res = compare(seq1[i], seq2[i]);
-        if (compare_res == '$')
-            weights[0]++;
-        else if (compare_res == '%')
-            weights[1]++;
-        else if (compare_res == '#')
-            weights[2]++;
-        else
-            weights[3]++;
-    }
-    alignment_score = (w[0] * weights[0]) - (w[1] * weights[1]) - (w[2] * weights[2]) - (w[3] * weights[3]);
-
-    return alignment_score;
-}
-
-int find_best_seq_alignment(char *seq1, char *seq2, int seq1_len, int seq2_len, int w[WEIGHTS], Result *result)
-{
-    // number of checks the alogrithem has to do
-    int num_of_check = seq1_len - seq2_len;
-
-    // creare arr for mutations sequances
-    char **mutation_arr = (char **)calloc(seq2_len, sizeof(char *));
-    if (!mutation_arr)
-        return 0;
-    mutation_arr[0] = seq2;
-
-    Result temp_result = {0, 0, 0};
-
-#pragma omp parallel for
-    for (int i = 1; i < seq2_len; i++)
-    {
-        mutation_arr[i] = mutation(seq2, i, seq2_len);
-    }
-
-#pragma omp parallel for private(temp_result)
-    for (int i = 0; i < seq2_len; i++)
-    {
-        temp_result.k = i;
-
-        launch_cuda(seq1, seq1_len, mutation_arr[i], strlen(mutation_arr[i]), num_of_check, w, &temp_result);
-
-        // Check if current score it the max
-        if (temp_result.score > result->score || result->score == 0)
-        {
-            result->score = temp_result.score;
-            result->n = temp_result.n;
-            result->k = temp_result.k;
-        }
-    }
-
-    for (int i = 0; i < seq2_len; i++)
-    {
-        free(mutation_arr[i]);
-    }
-
-    free(mutation_arr);
-
-    return result->score;
+    memcpy(result, &tempResult, 1);
+    return;
 }

@@ -2,7 +2,8 @@
 #define DATA_H
 
 #define ROOT 0
-#define MAX_LEN 3000
+#define MAX_LEN 5000
+#define MAX_CMP_SEQ 3000
 #define MAX_IN 2000
 #define GROUP_A_ROWS 9  // i
 #define GROUP_A_COLS 5  // j - max len of str in group a
@@ -10,27 +11,12 @@
 #define GROUP_B_COLS 7  // j - max len of str in group b
 #define WEIGHTS 4
 
-enum task
-{
-    WORK,
-    RESULT_SCORE,
-    STOP
-};
-
 typedef struct
 {
-    int n; // offset
-    int k; // location of hypen '-'
-    int score; // score of aligment
+    int n;
+    int k;
+    int offset;
+    int score;
 } Result;
-
-typedef struct
-{
-    char *seq1;
-    int seq1_len;
-    int number_of_sequences;
-    char **sequences; // Seq2's
-    int *sequences_len;
-} Input;
 
 #endif

@@ -11,8 +11,8 @@
 #include "data.h"
 #include "cudaFunctions.h"
 
-void create_result_type(MPI_Datatype *mpi_results_type);
-char *mutation(char *seq, int k, int len);
-int find_best_seq_alignment(char *seq1, char *seq2, int seq1_len, int seq2_len, int w[WEIGHTS], Result *result);
+// void create_result_type(MPI_Datatype *mpi_results_type);
+void create_mutation(char *seq, int n, int k, int len, char *mutation);
+void find_optimal_mutation_offset(char *baseSeq, char *cmpSeq, int baseSeqLen, int cmpSeqLen, int *weights, int *result);
 
 #endif
