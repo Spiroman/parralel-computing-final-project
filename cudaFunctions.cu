@@ -113,7 +113,7 @@ void launch_cuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes,
     cudaError_t cudaError = cudaSuccess;
     char *cuda_baseSeq;
     char *cuda_mutation;
-    char *cuda_cmpRes;
+    int *cuda_cmpRes;
     int *cuda_weights;
 
     // Allocate memory on GPU
