@@ -1,6 +1,6 @@
 10 2 3 4
 0123456789
 3
-asdfgh
+012367
 qwerty
 zxcvbn

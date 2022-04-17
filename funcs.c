@@ -54,7 +54,7 @@ void find_optimal_mutation_offset(char *baseSeq, char *cmpSeq, int baseSeqLen, i
                 for(int i = 0; i < lenOfAugmented; i++){
                     printf("%c", mutation[i]);
                 }
-		printf(" %s, aug base: %s, offset: %d, len of aug: %d", cmpSeq, baseSeqAugmented, offset, lenOfAugmented);
+		        printf(" %s, aug base: %s, offset: %d, len of aug: %d", cmpSeq, baseSeqAugmented, offset, lenOfAugmented);
                 printf("\n");
                 #endif
 
@@ -62,7 +62,7 @@ void find_optimal_mutation_offset(char *baseSeq, char *cmpSeq, int baseSeqLen, i
                 int *cmpRes = (int *)malloc(sizeof(int) * lenOfAugmented);
 
                 // Send mutation and comparison to be compared and determine matches (will fill the occurances int array).
-                // launch_cuda(baseSeq, mutation, lenOfAugmented, cmpRes, weights);
+                launch_cuda(baseSeq, mutation, lenOfAugmented, cmpRes, weights);
                 
                 // Calculate score
                 int tempScore = 0;
