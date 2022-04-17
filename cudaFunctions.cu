@@ -96,6 +96,7 @@ __global__ void determinePartialScores(char *baseSeq, char *mutation, int *cmpRe
             cmpRes[tid] = weights[3];
         }
     }
+}
 
 void checkError(cudaError_t cudaError, const char* s_err)
 {
