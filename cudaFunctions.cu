@@ -43,7 +43,7 @@ __device__ int checkConservativeGroup(char seq1, char seq2)
     {
         for (int j = 0; j < GROUP_A_COLS; j++)
         {
-            if ((semiConservativeGroup[i][j] == seq1) && (semiConservativeGroup[i][j] == seq2))
+            if ((conservativeGroup[i][j] == seq1) && (conservativeGroup[i][j] == seq2))
                 return 1;
         }
     }
@@ -56,8 +56,8 @@ __device__ int checkSemiConservativeGroup(char seq1, char seq2)
     {
         for (int j = 0; j < GROUP_A_COLS; j++)
         {
-                if ((group_two[i][j]== seq1) && (group_two[i][j] == seq2))
-                    return 1;
+            if ((semiConservativeGroup[i][j] == seq1) && (semiConservativeGroup[i][j] == seq2))
+                return 1;
         }
     }
     return 0;
@@ -99,7 +99,7 @@ __global__ void determinePartialScores(char *baseSeq, char *mutation, int *cmpRe
 
 void checkErr(cudaError_t err, const char* s_err)
 {
-      if (err != cudaSuccess)
+    if (err != cudaSuccess)
     {
         fprintf(stderr, "%s - %s\n", s_err, cudaGetErrorString(err));
         exit(EXIT_FAILURE);
@@ -110,6 +110,10 @@ void launch_cuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes,
 {
     // Error code to check return values for CUDA calls
     cudaError_t err = cudaSuccess;
+    char *cuda_baseSeq;
+    char *cuda_mutation;
+    char *cuda_cmpRes;
+    int *cuda_weights;
 
     // Allocate memory on GPU
     err = cudaMalloc((void **)&cuda_baseSeq, lenOfAugmented);
