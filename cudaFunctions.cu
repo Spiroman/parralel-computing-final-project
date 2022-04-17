@@ -64,13 +64,13 @@ __device__ int checkSemiConservativeGroup(char seq1, char seq2)
 }
 
 
-__global__ void determinePartialScores(char *baseSeq, char *mutation, int *cmpRes, int* weights){
+__global__ void determinePartialScores(char *baseSeq, char *mutation, int *cmpRes, int* weights, int numOfChecks){
     int tx = threadIdx.x;
     int tid = blockDim.x * blockIdx.x + threadIdx.x;
 
-    if (tid >= num_of_checks)
+    if (tid >= numOfChecks)
         return;
-    if (tid < num_of_checks)
+    if (tid < numOfChecks)
     {
         // For each type of match/missmatch we will assign the score of the match directly instead of the the char.
         // Meaning: if we have a full match, we will assign the weight of the full match in the result array
@@ -140,9 +140,9 @@ void launch_cuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes,
 
     // Calculate the number of blocks
     int blocksPerGrid = (lenOfAugmented + MAX_THREADS - 1) / MAX_THREADS;
-
+    // int numOfChecks = 
     // Launch the Kernel
-    determinePartialScores<<<blocksPerGrid, MAX_THREADS>>>(char *cuda_baseSeq, char *cuda_mutation, int *cuda_cmpRes, int *cuda_weights);
+    determinePartialScores<<<blocksPerGrid, MAX_THREADS>>>(char *cuda_baseSeq, char *cuda_mutation, int *cuda_cmpRes, int *cuda_weights, lenOfAugmented);
 
     err = cudaDeviceSynchronize();
     checkErr(err, "Failed to synch kernel -");
