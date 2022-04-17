@@ -97,11 +97,11 @@ __global__ void determinePartialScores(char *baseSeq, char *mutation, int *cmpRe
         }
     }
 
-void checkErr(cudaError_t err, const char* s_err)
+void checkError(cudaError_t cudaError, const char* s_err)
 {
-    if (err != cudaSuccess)
+    if (cudaError != cudaSuccess)
     {
-        fprintf(stderr, "%s - %s\n", s_err, cudaGetErrorString(err));
+        fprintf(stderr, "%s - %s\n", s_err, cudaGetErrorString(cudaError));
         exit(EXIT_FAILURE);
     }
 }
@@ -109,34 +109,34 @@ void checkErr(cudaError_t err, const char* s_err)
 void launch_cuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes, int *weights)
 {
     // Error code to check return values for CUDA calls
-    cudaError_t err = cudaSuccess;
+    cudaError_t cudaError = cudaSuccess;
     char *cuda_baseSeq;
     char *cuda_mutation;
     char *cuda_cmpRes;
     int *cuda_weights;
 
     // Allocate memory on GPU
-    err = cudaMalloc((void **)&cuda_baseSeq, lenOfAugmented);
-    checkErr(err, "Failed to allocate device memory seq2");
+    cudaError = cudaMalloc((void **)&cuda_baseSeq, lenOfAugmented);
+    checkError(cudaError, "Failed to allocate device memory seq2");
 
-    err = cudaMalloc((void **)&cuda_mutation, lenOfAugmented);
-    checkErr(err, "Failed to allocate device memory seq1");
+    cudaError = cudaMalloc((void **)&cuda_mutation, lenOfAugmented);
+    checkError(cudaError, "Failed to allocate device memory seq1");
 
-    err = cudaMalloc((void **)&cuda_cmpRes, lenOfAugmented);
-    checkErr(err, "Failed to allocate device memory w_cuda-");
+    cudaError = cudaMalloc((void **)&cuda_cmpRes, lenOfAugmented);
+    checkError(cudaError, "Failed to allocate device memory w_cuda-");
 
-    err = cudaMalloc((void **)&cuda_weights, WEIGHTS);
-    checkErr(err, "Failed to allocate device memory w_cuda-");
+    cudaError = cudaMalloc((void **)&cuda_weights, WEIGHTS);
+    checkError(cudaError, "Failed to allocate device memory w_cuda-");
 
     // Copy from host to device
-    err = cudaMemcpy(cuda_baseSeq, baseSeq, lenOfAugmented, cudaMemcpyHostToDevice);
-    checkErr(err, "Failed to copy data from host to device seq2 -");
+    cudaError = cudaMemcpy(cuda_baseSeq, baseSeq, lenOfAugmented, cudaMemcpyHostToDevice);
+    checkError(cudaError, "Failed to copy data from host to device seq2 -");
 
-    err = cudaMemcpy(cuda_mutation, mutation, lenOfAugmented, cudaMemcpyHostToDevice);
-    checkErr(err, "Failed to copy data from host to device seq1 -");
+    cudaError = cudaMemcpy(cuda_mutation, mutation, lenOfAugmented, cudaMemcpyHostToDevice);
+    checkError(cudaError, "Failed to copy data from host to device seq1 -");
 
-    err = cudaMemcpy(cuda_weights, weights, WEIGHTS, cudaMemcpyHostToDevice);
-    checkErr(err, "Failed to copy data from host to device w_cuda -");
+    cudaError = cudaMemcpy(cuda_weights, weights, WEIGHTS, cudaMemcpyHostToDevice);
+    checkError(cudaError, "Failed to copy data from host to device w_cuda -");
 
     // Calculate the number of blocks
     int blocksPerGrid = (lenOfAugmented + MAX_THREADS - 1) / MAX_THREADS;
@@ -144,27 +144,27 @@ void launch_cuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes,
     // Launch the Kernel
     determinePartialScores<<<blocksPerGrid, MAX_THREADS>>>(char *cuda_baseSeq, char *cuda_mutation, int *cuda_cmpRes, int *cuda_weights, lenOfAugmented);
 
-    err = cudaDeviceSynchronize();
-    checkErr(err, "Failed to synch kernel -");
+    cudaError = cudaDeviceSynchronize();
+    checkError(cudaError, "Failed to synch kernel -");
 
-    err = cudaGetLastError();
-    checkErr(err, "Failed kernel -");
+    cudaError = cudaGetLastError();
+    checkError(cudaError, "Failed kernel -");
     
     // Copy results
-    err = cudaMemcpy(cmpRes, cuda_cmpRes, lenOfAugmented, cudaMemcpyDeviceToHost);
-    checkErr(err, "Failed to copy data device to host results -");
+    cudaError = cudaMemcpy(cmpRes, cuda_cmpRes, lenOfAugmented, cudaMemcpyDeviceToHost);
+    checkError(cudaError, "Failed to copy data device to host results -");
 
-    err = cudaFree(cuda_baseSeq);
-    checkErr(err, "Failed to free seq1 -");
+    cudaError = cudaFree(cuda_baseSeq);
+    checkError(cudaError, "Failed to free seq1 -");
 
-    err = cudaFree(cuda_mutation);
-    checkErr(err, "Failed to free seq2 -");
+    cudaError = cudaFree(cuda_mutation);
+    checkError(cudaError, "Failed to free seq2 -");
 
-    err = cudaFree(cuda_cmpRes);
-    checkErr(err, "Failed to free results -");   
+    cudaError = cudaFree(cuda_cmpRes);
+    checkError(cudaError, "Failed to free results -");   
 
-    err = cudaFree(cuda_weights);
-    checkErr(err, "Failed to free weights -");
+    cudaError = cudaFree(cuda_weights);
+    checkError(cudaError, "Failed to free weights -");
     
     return;
 }
