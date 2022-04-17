@@ -63,8 +63,8 @@ __device__ int checkSemiConservativeGroup(char seq1, char seq2)
     return 0;
 }
 
-
-__global__ void determinePartialScores(char *baseSeq, char *mutation, int *cmpRes, int* weights, int numOfChecks){
+__global__ void determinePartialScores(char *baseSeq, char *mutation, int *cmpRes, int *weights, int numOfChecks)
+{
     int tx = threadIdx.x;
     int tid = blockDim.x * blockIdx.x + threadIdx.x;
 
