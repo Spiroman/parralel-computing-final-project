@@ -143,7 +143,7 @@ void launch_cuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes,
     int blocksPerGrid = (lenOfAugmented + MAX_THREADS - 1) / MAX_THREADS;
     // int numOfChecks = 
     // Launch the Kernel
-    determinePartialScores<<<blocksPerGrid, MAX_THREADS>>>(char *cuda_baseSeq, char *cuda_mutation, int *cuda_cmpRes, int *cuda_weights, lenOfAugmented);
+    determinePartialScores<<<blocksPerGrid, MAX_THREADS>>>(cuda_baseSeq, cuda_mutation, cuda_cmpRes, cuda_weights, lenOfAugmented);
 
     cudaError = cudaDeviceSynchronize();
     checkError(cudaError, "Failed to synch kernel -");
