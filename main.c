@@ -340,7 +340,7 @@ int main(int argc, char *argv[])
             // }
             #endif
             
-            find_optimal_mutation_offset(baseSeq, cmpSeq, baseSeqLen, cmpSeqLen, scoringWeights, result);
+            findOptimalMutationOffset(baseSeq, cmpSeq, baseSeqLen, cmpSeqLen, scoringWeights, result);
             MPI_Send(result, 3, MPI_INT, ROOT, RESULT_SCORE, MPI_COMM_WORLD);
 
             #ifdef DEBUG

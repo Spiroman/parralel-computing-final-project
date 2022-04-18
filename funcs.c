@@ -17,7 +17,7 @@ void createMutation(char *seq, int n, int k, int len, char *mutation)
     memcpy(mutation + k - 2, seq + k, strlen(seq) - k);
 }
 
-void find_optimal_mutation_offset(char *baseSeq, char *cmpSeq, int baseSeqLen, int cmpSeqLen, int* weights, int *result)
+void findOptimalMutationOffset(char *baseSeq, char *cmpSeq, int baseSeqLen, int cmpSeqLen, int* weights, int *result)
 {
     // Determine the number of offsets to try. base - comperative - 2 chars for n&k
     int numOfOffsets = baseSeqLen - cmpSeqLen + 2;
