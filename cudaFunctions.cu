@@ -11,6 +11,7 @@
 
 #define MAX_THREADS 256
 #define WEIGHTS 4
+#define DEBUG 1
 
 __device__ char conservativeGroup[GROUP_A_ROWS][GROUP_A_COLS] = {
     "NDEQ",
@@ -71,10 +72,21 @@ __global__ void determinePartialScores(char *baseSeq, char *mutation, int *cmpRe
         return;
     if (tid < numOfChecks)
     {
+        #ifdef DEBUG
+        printf("base: ");;
+        for(int i =0; i< numOfchecks; i++){
+            printf("%c", baseSeq[i]);
+        }
+        printf(" . mutation: ");
+        for(int i =0; i< numOfchecks; i++){
+            printf("%c", mutation[i]);
+        }
+	    // printf("tid: %d, base:%c, mut: %c\n", tid, baseSeq[tid], mutation[tid]);
+        #endif
         // For each type of match/missmatch we will assign the score of the match directly instead of the the char.
         // Meaning: if we have a full match, we will assign the weight of the full match in the result array
         // instead of putting '*', which will make the final calculation quicker (less checks for the type of char in each index)
-	printf("tid: %d, base:%c, mut: %c\n", tid, baseSeq[tid], mutation[tid]);
+        
         if (baseSeq[tid] == mutation[tid])
         {
             // Complete match -> '*' in our assignment
@@ -95,6 +107,15 @@ __global__ void determinePartialScores(char *baseSeq, char *mutation, int *cmpRe
             // Not a match -> ' ' in our assignment
             cmpRes[tid] = weights[3];
         }
+        #ifdef DEBUG
+        printf(" cmp: ");
+        for (int i = 0; i < numOfchecks; i++)
+        {
+            printf("%c", mutation[i]);
+        }
+        printf("\n");'
+        // printf("tid: %d, base:%c, mut: %c\n", tid, baseSeq[tid], mutation[tid]);
+        #endif
     }
 }
 
