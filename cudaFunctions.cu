@@ -11,7 +11,8 @@
 
 #define MAX_THREADS 256
 #define WEIGHTS 4
-#define DEBUG 1
+// #define DEBUG 1
+#define DEBUG2 1
 
 __device__ char conservativeGroup[GROUP_A_ROWS][GROUP_A_COLS] = {
     "NDEQ",
@@ -73,12 +74,12 @@ __global__ void determinePartialScores(char *baseSeq, char *mutation, int *cmpRe
     if (tid < numOfChecks)
     {
         #ifdef DEBUG
-        printf("base: ");;
-        for(int i =0; i< numOfchecks; i++){
+        printf("base: ");
+        for(int i =0; i< numOfChecks; i++){
             printf("%c", baseSeq[i]);
         }
         printf(" . mutation: ");
-        for(int i =0; i< numOfchecks; i++){
+        for(int i =0; i< numOfChecks; i++){
             printf("%c", mutation[i]);
         }
 	    // printf("tid: %d, base:%c, mut: %c\n", tid, baseSeq[tid], mutation[tid]);
@@ -109,11 +110,11 @@ __global__ void determinePartialScores(char *baseSeq, char *mutation, int *cmpRe
         }
         #ifdef DEBUG
         printf(" cmp: ");
-        for (int i = 0; i < numOfchecks; i++)
+        for (int i = 0; i < numOfChecks; i++)
         {
-            printf("%c", mutation[i]);
+            printf("%d,", cmpRes[i]);
         }
-        printf("\n");'
+        printf("\n");
         // printf("tid: %d, base:%c, mut: %c\n", tid, baseSeq[tid], mutation[tid]);
         #endif
     }
@@ -175,6 +176,15 @@ void launchCuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes, 
     // Copy results
     cudaError = cudaMemcpy(cmpRes, cuda_cmpRes, lenOfAugmented, cudaMemcpyDeviceToHost);
     checkError(cudaError, "Failed to copy data device to host results -");
+#ifdef DEBUG2
+        printf(" cmp: ");
+        for (int i = 0; i < lenOfAugmented; i++)
+        {
+            printf("%d,", cmpRes[i]);
+        }
+        printf("\n");
+        // printf("tid: %d, base:%c, mut: %c\n", tid, baseSeq[tid], mutation[tid]);
+        #endif
 
     cudaError = cudaFree(cuda_baseSeq);
     checkError(cudaError, "Failed to free seq1 -");

@@ -6,6 +6,7 @@
 
 // #define DEBUG 1
 // #define DEBUG_SCORE 1 
+// #define DEBUG2 1
 // This function assumes the indices n, and k start with 1 rather than 0
 void createMutation(char *seq, int n, int k, int len, char *mutation)
 {    
@@ -48,7 +49,12 @@ void findOptimalMutationOffset(char *baseSeq, char *cmpSeq, int baseSeqLen, int 
                 // Create the mutation that will be checked
                 char *mutation = (char *)malloc(sizeof(char) * lenOfAugmented);
                 createMutation(cmpSeq, n, k, lenOfAugmented, mutation);
-                
+#ifdef DEBUG2
+		for(int i=0; i<lenOfAugmented; i++){
+			printf("%c", mutation[i]);
+		}
+		printf("\n");
+#endif
                 // Create array of partial results depending on match and its weight.
                 int *cmpRes = (int *)calloc(lenOfAugmented, sizeof(int));
                 // #ifdef DEBUG_SCORE
