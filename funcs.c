@@ -58,16 +58,24 @@ void findOptimalMutationOffset(char *baseSeq, char *cmpSeq, int baseSeqLen, int 
                 #endif
 
                 // Create array of partial results depending on match and its weight.
-                int *cmpRes = (int *)malloc(sizeof(int) * lenOfAugmented);
+                int *cmpRes = (int *)calloc(lenOfAugmented, sizeof(int));
+                #ifdef DEBUG_SCORE
+                for (int i = 0; i < lenOfAugmented; i++)
+                {
+                    printf("%d,", cmpRes[i]);
+                }
+                printf("\n");
+                #endif
 
                 // Send mutation and comparison to be compared and determine matches (will fill the occurances int array).
                 launchCuda(baseSeq, mutation, lenOfAugmented, cmpRes, weights);
-		#ifdef DEBUG_SCORE
-		for(int i=0; i< lenOfAugmented; i++){
-		    printf("%d,", cmpRes[i]);
-		}
-		printf("\n");
-		#endif
+                
+                #ifdef DEBUG_SCORE
+                for(int i=0; i< lenOfAugmented; i++){
+                    printf("%d,", cmpRes[i]);
+                }
+                printf("\n");
+                #endif
 
                 // Calculate score
                 int tempScore = 0;
