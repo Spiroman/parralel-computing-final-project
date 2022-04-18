@@ -5,7 +5,7 @@
 #include "data.h"
 
 // #define DEBUG 1
-
+#define DEBUG_SCORE 1 
 // This function assumes the indices n, and k start with 1 rather than 0
 void createMutation(char *seq, int n, int k, int len, char *mutation)
 {    
@@ -36,7 +36,7 @@ void findOptimalMutationOffset(char *baseSeq, char *cmpSeq, int baseSeqLen, int 
     // Each thread will have it's own copy of the results struct. At the end the maximum result and its values will be returned
     // In each execution we will check for each pair of mutations, for each possible offset of said mutation, what yields the best score.
     // Array indices start as 1 instead of 0, and are then adjusted in the mutation creation function.
-    printf("cpm seq len: %d. numofoffsets: %d. baseseqlen: %d\n", cmpSeqLen, numOfOffsets, baseSeqLen);
+    // printf("cpm seq len: %d. numofoffsets: %d. baseseqlen: %d\n", cmpSeqLen, numOfOffsets, baseSeqLen);
     #pragma omp paraller for private(tempResult, mutation) task_reduction(max: tempResult.score)
     for (int n = 1; n < cmpSeqLen; n++){
         for (int k = n + 1; k <= cmpSeqLen; k++){
@@ -62,6 +62,12 @@ void findOptimalMutationOffset(char *baseSeq, char *cmpSeq, int baseSeqLen, int 
 
                 // Send mutation and comparison to be compared and determine matches (will fill the occurances int array).
                 launchCuda(baseSeq, mutation, lenOfAugmented, cmpRes, weights);
+		#ifdef DEBUG_SCORE
+		for(int i=0; i< lenOfAugmented; i++){
+		    printf("%d,", cmpRes[i]);
+		}
+		printf("\n");
+		#endif
 
                 // Calculate score
                 int tempScore = 0;
