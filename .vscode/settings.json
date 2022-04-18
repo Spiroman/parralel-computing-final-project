@@ -55,6 +55,7 @@
         "streambuf": "c",
         "cinttypes": "c",
         "typeinfo": "c",
-        "cudafunctions.h": "c"
+        "cudafunctions.h": "c",
+        "funcs.h": "c"
     }
 }

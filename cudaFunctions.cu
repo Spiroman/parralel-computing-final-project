@@ -65,7 +65,6 @@ __device__ int checkSemiConservativeGroup(char seq1, char seq2)
 
 __global__ void determinePartialScores(char *baseSeq, char *mutation, int *cmpRes, int *weights, int numOfChecks)
 {
-    int tx = threadIdx.x;
     int tid = blockDim.x * blockIdx.x + threadIdx.x;
 
     if (tid >= numOfChecks)
@@ -107,7 +106,7 @@ void checkError(cudaError_t cudaError, const char* s_err)
     }
 }
 
-void launch_cuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes, int *weights)
+void launchCuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes, int *weights)
 {
     // Error code to check return values for CUDA calls
     cudaError_t cudaError = cudaSuccess;
