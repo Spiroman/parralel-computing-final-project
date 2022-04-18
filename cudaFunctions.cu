@@ -65,7 +65,7 @@ __device__ int checkSemiConservativeGroup(char seq1, char seq2)
     return 0;
 }
 
-__global__ void determinePartialScores(char *baseSeq, char *mutation, int *cmpRes, int *weights, int numOfChecks)
+__global__ void determinePartialScores(char *baseSeq, char *mutation, int *cmpRes, int *weights, int numOfChecks, int* sum)
 {
     int tid = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -92,22 +92,29 @@ __global__ void determinePartialScores(char *baseSeq, char *mutation, int *cmpRe
         {
             // Complete match -> '*' in our assignment
             cmpRes[tid] = weights[0];
+            atomicAdd(sum, weights[0]);
         }
         else if (checkConservativeGroup(baseSeq[tid],mutation[tid]))
         {
             // Conservative match -> ':' in our assignment
             cmpRes[tid] = weights[1];
+            atomicAdd(sum, weights[1]);
         }
         else if (checkSemiConservativeGroup(baseSeq[tid], mutation[tid]))
         {
             // Semi-Conservative match -> '.' in our assignment
             cmpRes[tid] = weights[2];
+            atomicAdd(sum, weights[2]);
         }
         else
         {
             // Not a match -> ' ' in our assignment
             cmpRes[tid] = weights[3];
+            atomicAdd(sum, weights[3]);
         }
+        #ifdef DEBUG2
+        printf("Sum in kernel: %d", &sum);
+        #endif
         #ifdef DEBUG
         printf(" cmp: ");
         for (int i = 0; i < numOfChecks; i++)
@@ -137,6 +144,7 @@ void launchCuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes, 
     char *cuda_mutation;
     int *cuda_cmpRes;
     int *cuda_weights;
+    int *sum = 0;
 
     // Allocate memory on GPU
     cudaError = cudaMalloc((void **)&cuda_baseSeq, lenOfAugmented);
@@ -149,6 +157,9 @@ void launchCuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes, 
     checkError(cudaError, "Failed to allocate device memory w_cuda-");
 
     cudaError = cudaMalloc((void **)&cuda_weights, WEIGHTS);
+    checkError(cudaError, "Failed to allocate device memory w_cuda-");
+
+    cudaError = cudaMalloc((void **)&cuda_sum, 1);
     checkError(cudaError, "Failed to allocate device memory w_cuda-");
 
     // Copy from host to device
@@ -165,8 +176,7 @@ void launchCuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes, 
     int blocksPerGrid = (lenOfAugmented + MAX_THREADS - 1) / MAX_THREADS;
     // int numOfChecks = 
     // Launch the Kernel
-    determinePartialScores<<<blocksPerGrid, MAX_THREADS>>>(cuda_baseSeq, cuda_mutation, cuda_cmpRes, cuda_weights, lenOfAugmented);
-
+    determinePartialScores<<<blocksPerGrid, MAX_THREADS>>>(cuda_baseSeq, cuda_mutation, cuda_cmpRes, cuda_weights, lenOfAugmented, sum);
     cudaError = cudaDeviceSynchronize();
     checkError(cudaError, "Failed to synch kernel -");
 
@@ -176,15 +186,23 @@ void launchCuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes, 
     // Copy results
     cudaError = cudaMemcpy(cmpRes, cuda_cmpRes, lenOfAugmented, cudaMemcpyDeviceToHost);
     checkError(cudaError, "Failed to copy data device to host results -");
-#ifdef DEBUG2
-        printf(" cmp: ");
-        for (int i = 0; i < lenOfAugmented; i++)
-        {
-            printf("%d,", cmpRes[i]);
-        }
-        printf("\n");
-        // printf("tid: %d, base:%c, mut: %c\n", tid, baseSeq[tid], mutation[tid]);
-        #endif
+    
+    cudaError = cudaMemcpy(sum, cuda_sum, 1, cudaMemcpyDeviceToHost);
+    checkError(cudaError, "Failed to copy data device to host results -");
+
+    #ifdef DEBUG2
+    printf("Sum: %d\n", sum)
+    #endif
+    
+    #ifdef DEBUG2
+    printf(" cmp: ");
+    for (int i = 0; i < lenOfAugmented; i++)
+    {
+        printf("%d,", cmpRes[i]);
+    }
+    printf("\n");
+    // printf("tid: %d, base:%c, mut: %c\n", tid, baseSeq[tid], mutation[tid]);
+    #endif
 
     cudaError = cudaFree(cuda_baseSeq);
     checkError(cudaError, "Failed to free seq1 -");
