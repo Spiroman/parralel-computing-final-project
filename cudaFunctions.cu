@@ -113,7 +113,7 @@ __global__ void determinePartialScores(char *baseSeq, char *mutation, int *cmpRe
             atomicAdd(sum, weights[3]);
         }
         #ifdef DEBUG2
-        printf("Sum in kernel: %d", &sum);
+        printf("Sum in kernel: %d", *sum);
         #endif
         #ifdef DEBUG
         printf(" cmp: ");
@@ -144,6 +144,7 @@ void launchCuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes, 
     char *cuda_mutation;
     int *cuda_cmpRes;
     int *cuda_weights;
+    int *cuda_sum;
     int *sum = 0;
 
     // Allocate memory on GPU
@@ -191,7 +192,7 @@ void launchCuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes, 
     checkError(cudaError, "Failed to copy data device to host results -");
 
     #ifdef DEBUG2
-    printf("Sum: %d\n", sum)
+    printf("Sum: %d\n", *sum);
     #endif
     
     #ifdef DEBUG2
