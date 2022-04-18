@@ -74,6 +74,7 @@ __global__ void determinePartialScores(char *baseSeq, char *mutation, int *cmpRe
         // For each type of match/missmatch we will assign the score of the match directly instead of the the char.
         // Meaning: if we have a full match, we will assign the weight of the full match in the result array
         // instead of putting '*', which will make the final calculation quicker (less checks for the type of char in each index)
+	printf("tid: %d, base:%c, mut: %c\n", tid, baseSeq[tid], mutation[tid]);
         if (baseSeq[tid] == mutation[tid])
         {
             // Complete match -> '*' in our assignment

@@ -4,8 +4,8 @@
 #include <limits.h>
 #include "data.h"
 
-#define DEBUG 1
-#define DEBUG_SCORE 1 
+// #define DEBUG 1
+// #define DEBUG_SCORE 1 
 // This function assumes the indices n, and k start with 1 rather than 0
 void createMutation(char *seq, int n, int k, int len, char *mutation)
 {    
@@ -66,7 +66,7 @@ void findOptimalMutationOffset(char *baseSeq, char *cmpSeq, int baseSeqLen, int 
                 for(int i = 0; i < lenOfAugmented; i++){
                     printf("%c", mutation[i]);
                 }
-                printf("mutation %s, aug base: %s, offset: %d, len of aug: %d", cmpSeq, baseSeqAugmented, offset, lenOfAugmented);
+                printf(" , aug base: %s, offset: %d, len of aug: %d", baseSeqAugmented, offset, lenOfAugmented);
                 printf("\n");
                 #endif
                 

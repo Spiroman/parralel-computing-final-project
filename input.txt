@@ -1,6 +1,6 @@
 10 2 3 4
-0123456789
+abcdfeghij
 3
-012367
+abcdef
 qwerty
 zxcvbn
