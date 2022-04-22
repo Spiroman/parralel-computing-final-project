@@ -5,8 +5,8 @@
 #include "data.h"
 
 // #define DEBUG 1
-// #define DEBUG_SCORE 1 
-// #define DEBUG2 1
+// #define DEBUG_SCORE 1
+#define DEBUG_MUTATION 1
 // This function assumes the indices n, and k start with 1 rather than 0
 void createMutation(char *seq, int n, int k, int len, char *mutation)
 {    
@@ -49,21 +49,16 @@ void findOptimalMutationOffset(char *baseSeq, char *cmpSeq, int baseSeqLen, int 
                 // Create the mutation that will be checked
                 char *mutation = (char *)malloc(sizeof(char) * lenOfAugmented);
                 createMutation(cmpSeq, n, k, lenOfAugmented, mutation);
-#ifdef DEBUG2
-		for(int i=0; i<lenOfAugmented; i++){
-			printf("%c", mutation[i]);
-		}
-		printf("\n");
-#endif
+
+                #ifdef DEBUG_MUTATION
+                for(int i=0; i<lenOfAugmented; i++){
+                    printf("%c", mutation[i]);
+                }
+                printf("\n");
+                #endif
+
                 // Create array of partial results depending on match and its weight.
                 int *cmpRes = (int *)calloc(lenOfAugmented, sizeof(int));
-                // #ifdef DEBUG_SCORE
-                // for (int i = 0; i < lenOfAugmented; i++)
-                // {
-                //     printf("%d,", cmpRes[i]);
-                // }
-                // printf("\n");
-                // #endif
 
                 // Send mutation and comparison to be compared and determine matches (will fill the occurances int array).
                 launchCuda(baseSeq, mutation, lenOfAugmented, cmpRes, weights);
@@ -104,12 +99,10 @@ void findOptimalMutationOffset(char *baseSeq, char *cmpSeq, int baseSeqLen, int 
             }
         }
     }
-    // int n;
-    // int k;
-    // int offset;
-    // int score;
 
+    #ifdef DEBUG_RESULT
     printf("Max score:%d\n", tempResult.score);
+    #endif
     memcpy(result, &tempResult, 1);
     return;
 }
