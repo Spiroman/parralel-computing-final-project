@@ -143,8 +143,6 @@ void launchCuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes, 
     char *cuda_mutation;
     int *cuda_cmpRes;
     int *cuda_weights;
-    int *cuda_sum;
-    int *sum = 0;
     
     // Allocate memory on GPU
     cudaError = cudaMalloc((void **)&cuda_baseSeq, lenOfAugmented);
@@ -157,9 +155,6 @@ void launchCuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes, 
     checkError(cudaError, "Failed to allocate device memory w_cuda-");
 
     cudaError = cudaMalloc((void **)&cuda_weights, WEIGHTS * sizeof(int));
-    checkError(cudaError, "Failed to allocate device memory w_cuda-");
-
-    cudaError = cudaMalloc((void **)&cuda_sum, 1);
     checkError(cudaError, "Failed to allocate device memory w_cuda-");
 
     // Copy from host to device

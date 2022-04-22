@@ -1,5 +1,5 @@
 10 2 3 4
-abcdfeghij
+abcdefghij
 3
 abcdef
 qwerty

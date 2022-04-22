@@ -37,11 +37,10 @@ void findOptimalMutationOffset(char *baseSeq, char *cmpSeq, int baseSeqLen, int 
     // Each thread will have it's own copy of the results struct. At the end the maximum result and its values will be returned
     // In each execution we will check for each pair of mutations, for each possible offset of said mutation, what yields the best score.
     // Array indices start as 1 instead of 0, and are then adjusted in the mutation creation function.
-    // printf("cpm seq len: %d. numofoffsets: %d. baseseqlen: %d\n", cmpSeqLen, numOfOffsets, baseSeqLen);
     #pragma omp paraller for private(tempResult, mutation) task_reduction(max: tempResult.score)
     for (int n = 1; n < cmpSeqLen; n++){
         for (int k = n + 1; k <= cmpSeqLen; k++){
-            for (int offset = 0; offset <= numOfOffsets; offset++){
+            for (int offset = 0; offset < numOfOffsets; offset++){
                 // Separate the part of the base sequence with which the comparisons will be made
                 char *baseSeqAugmented = (char *)malloc(sizeof(char) * lenOfAugmented);
                 memcpy(baseSeqAugmented, baseSeq + offset, lenOfAugmented);
@@ -51,6 +50,11 @@ void findOptimalMutationOffset(char *baseSeq, char *cmpSeq, int baseSeqLen, int 
                 createMutation(cmpSeq, n, k, lenOfAugmented, mutation);
 
                 #ifdef DEBUG_MUTATION
+                printf("cmpSeq: ");
+                for(int i=0; i<lenOfAugmented; i++){
+                    printf("%c", cmpSeq[i+offset]);
+                }
+                printf(" mutation: ");
                 for(int i=0; i<lenOfAugmented; i++){
                     printf("%c", mutation[i]);
                 }
