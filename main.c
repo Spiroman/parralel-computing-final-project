@@ -22,18 +22,6 @@ enum task
     STOP
 };
 
-
-
-
-// typedef struct
-// {
-//     char *seq1;
-//     int seq1_len;
-//     int number_of_sequences;
-//     char **sequences; // Seq2's
-//     int *sequences_len;
-// } Input;
-
 int main(int argc, char *argv[])
 {
     int rank, size;
@@ -50,9 +38,7 @@ int main(int argc, char *argv[])
     int numOfcmpSeqs;
     
     // Variables for output
-    int *offsets;
-    int *n;
-    int *k;
+    Result *results;
 
     MPI_Status status;
 
@@ -60,38 +46,44 @@ int main(int argc, char *argv[])
 
     MPI_Init(&argc, &argv);
 
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    // Define a new MPI data type for the results
+    // Example taken from Rookie HPC
+    MPI_Datatype MPI_RESULT;
+    int lengths[4] = {1, 1, 1, 1};
+
+    // Calculate displacements
+    // In C, by default padding can be inserted between fields. MPI_Get_address will allow
+    // to get the address of each struct field and calculate the corresponding displacement
+    // relative to that struct base address. The displacements thus calculated will therefore
+    // include padding if any.
+    MPI_Aint displacements[4];
+    Result dummy_result;
+    MPI_Aint base_address;
+    // int n;
+    // int k;
+    // int offset;
+    // int score;
+    MPI_Get_address(&dummy_result, &base_address);
+    MPI_Get_address(&dummy_result.n, &displacements[0]);
+    MPI_Get_address(&dummy_result.k, &displacements[1]);
+    MPI_Get_address(&dummy_result.offset, &displacements[2]);
+    MPI_Get_address(&dummy_result.score, &displacements[3]);
+    displacements[0] = MPI_Aint_diff(displacements[0], base_address);
+    displacements[1] = MPI_Aint_diff(displacements[1], base_address);
+    displacements[2] = MPI_Aint_diff(displacements[2], base_address);
+    displacements[3] = MPI_Aint_diff(displacements[3], base_address);
+
+    MPI_Datatype types[4] = {MPI_INT, MPI_INT, MPI_INT, MPI_INT};
+    MPI_Type_create_struct(3, lengths, displacements, types, &MPI_RESULT);
+    MPI_Type_commit(&MPI_RESULT);
+
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     if (rank == ROOT)
     {
-        // Result tempResult;
-        // tempResult.score = 1000000;
-        // // tempResult.score = 10;
-        // // int numOfMutations = 0;
-        // // #pragma omp parallel for private(numOfMutations) task_reduction(+: numOfMutations)
-        // #pragma omp paraller for private(tempResult) task_reduction(max: tempResult.score)
-        //     for (int i = 0; i < 1000; i++){
-        //     // tempResult.score = i;
-        //     tempResult.n = i;
-        //     // numOfMutations++;
-        // }
-        // printf("%d\n", tempResult.score);
-        // printf("%d\n", tempResult.n);
-
-        // char *bla = "abcdefgh";
-        // char *temp = (char *)calloc(3, sizeof(char));
-        // int n2 = 7;
-        // int k2 = 8;
-        // memcpy(temp, bla, n2 - 1);
-        // memcpy(temp + n2 - 1, bla + n2, k2 - n2 - 1);
-        // memcpy(temp + k2 - 2, bla + k2, strlen(bla) - k2);
-        // for(int i = 0; i < strlen(temp); i++){
-        //     printf("%c", temp[i]);
-        // }
-        // printf("\n");
-
         // Start reading input file from input stream (input is piped into the program)
         fgets(buffer, MAX_LEN, stdin);
 
@@ -121,9 +113,7 @@ int main(int argc, char *argv[])
         sscanf(buffer, "%d", &numOfcmpSeqs);
 
         // Init results arrays
-        offsets = (int *)calloc(numOfcmpSeqs, sizeof(int));
-        n = (int *)calloc(numOfcmpSeqs, sizeof(int));
-        k = (int *)calloc(numOfcmpSeqs, sizeof(int));
+        results = (Result *)calloc(numOfcmpSeqs, sizeof(Result));
 
         // Allocate memory for comparison sequences
         cmpSeqs = (char **)calloc(numOfcmpSeqs, sizeof(char*));
@@ -172,8 +162,6 @@ int main(int argc, char *argv[])
         }
         printf("base sequence length %d\n", baseSeqLen);
         #endif
-
-        // double t = MPI_Wtime();
         
         // Dynamic work allocation - similar structure to the first HW1 assignment.
         int jobs_sent = 0;
@@ -187,19 +175,19 @@ int main(int argc, char *argv[])
             jobs_sent++;
         }
 
-        // This is a temporary storage for our results. It will hold the offset, n, and k integers from the worker process
-        int *res = (int *)malloc(sizeof(int) *3);
-
         #ifdef DEBUG
         printf("jobs sent: %d\n", jobs_sent);
         #endif
 
         for (int jobs_done = 0; jobs_done <= numOfcmpSeqs-1; jobs_done++)
         {
+            // Temporary holder for the result from the worker thread
+            Result res;
             #ifdef DEBUG
             printf("jobs done: %d\n", jobs_done);
             #endif
-            MPI_Recv(res, 3, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+
+            MPI_Recv(&res, 1, MPI_RESULT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 
             #ifdef DEBUG
             printf("received res in root from %d\n", status.MPI_SOURCE);
@@ -211,20 +199,10 @@ int main(int argc, char *argv[])
             printf("%p\n", offsets);
             printf("%p\n", n);
             printf("%p\n", k);
-            // for (int i = 0; i < 3; i++)
-            // {
-            //     offsets[i] = res[i];
-            // }
-            // for (int i = 0; i < 3; i++)
-            // {
-            //     printf("%d\n", offsets[i]);
-            // }
             #endif
 
             // Save results here
-            offsets[status.MPI_SOURCE] = res[0];
-            n[status.MPI_SOURCE] = res[1];
-            k[status.MPI_SOURCE] = res[2];
+            results[status.MPI_SOURCE] = res;
 
             #ifdef DEBUG
             printf("Saved results\n");
@@ -327,21 +305,12 @@ int main(int argc, char *argv[])
             #ifdef DEBUG
             printf("Sending message from rank %d\n", rank);
             #endif
+            
             // Result *result = (Result *)calloc(1, sizeof(Result));
-            int *result = (int *)calloc(3, sizeof(int));
-            // int result[3] = {1,2,3};
-            #ifdef DEBUG
-            printf("%p\n", &result);
-            for(int i = 0; i < 3; i++){
-                result[i] = i+10;
-            }
-            // for(int i = 0; i < 3; i++){
-            //     printf("%d\n", result[i]);
-            // }
-            #endif
+            Result *result = (Result *)calloc(1, sizeof(Result));
             
             findOptimalMutationOffset(baseSeq, cmpSeq, baseSeqLen, cmpSeqLen, scoringWeights, result);
-            MPI_Send(result, 3, MPI_INT, ROOT, RESULT_SCORE, MPI_COMM_WORLD);
+            MPI_Send(result, 1, MPI_RESULT, ROOT, RESULT_SCORE, MPI_COMM_WORLD);
 
             #ifdef DEBUG
             printf("Sent message from rank %d\n", rank);
@@ -351,16 +320,6 @@ int main(int argc, char *argv[])
         #ifdef DEBUG
         printf("Exited work in rank %d\n", status.MPI_SOURCE);
         #endif
-        
-        // Send results to root
-        // MPI_Send(results, input.number_of_sequences, mpi_results, ROOT, RESULT_SCORE, MPI_COMM_WORLD);
-
-        // free(results);
-        // free(input.seq1);
-        // free(input.sequences);
-        // free(input.sequences_len);
     }
-
-    // MPI_Type_free(&mpi_results);
     MPI_Finalize();
 }

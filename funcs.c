@@ -7,7 +7,7 @@
 // #define DEBUG 1
 // #define DEBUG_SCORE 1
 // #define DEBUG_MUTATION 1
-#define DEBUG_RESULT 1
+// #define DEBUG_RESULT 1
 
 // This function assumes the indices n, and k start with 1 rather than 0
 void createMutation(char *seq, int n, int k, int len, char *mutation)
@@ -20,7 +20,7 @@ void createMutation(char *seq, int n, int k, int len, char *mutation)
     memcpy(mutation + k - 2, seq + k, strlen(seq) - k);
 }
 
-void findOptimalMutationOffset(char *baseSeq, char *cmpSeq, int baseSeqLen, int cmpSeqLen, int* weights, int *result)
+void findOptimalMutationOffset(char *baseSeq, char *cmpSeq, int baseSeqLen, int cmpSeqLen, int* weights, Result *result)
 {
     // Determine the number of offsets to try. base - comperative - 2 chars for n&k
     int numOfOffsets = baseSeqLen - cmpSeqLen + 2;

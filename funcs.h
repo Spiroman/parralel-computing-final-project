@@ -13,6 +13,6 @@
 
 // void create_result_type(MPI_Datatype *mpi_results_type);
 void create_mutation(char *seq, int n, int k, int len, char *mutation);
-void findOptimalMutationOffset(char *baseSeq, char *cmpSeq, int baseSeqLen, int cmpSeqLen, int *weights, int *result);
+void findOptimalMutationOffset(char *baseSeq, char *cmpSeq, int baseSeqLen, int cmpSeqLen, int *weights, Result *result);
 
 #endif
