@@ -12,7 +12,6 @@
 #define MAX_THREADS 256
 #define WEIGHTS 4
 // #define DEBUG 1
-// #define DEBUG2 1
 
 __device__ char conservativeGroup[GROUP_A_ROWS][GROUP_A_COLS] = {
     "NDEQ",
@@ -74,6 +73,7 @@ __global__ void determinePartialScores(char *baseSeq, char *mutation, int *cmpRe
     if (tid < numOfChecks)
     {
         #ifdef DEBUG
+        // Check all passed parameters and their assignment
         printf("base: ");
         for(int i =0; i< numOfChecks; i++){
             printf("%c", baseSeq[i]);
@@ -82,12 +82,13 @@ __global__ void determinePartialScores(char *baseSeq, char *mutation, int *cmpRe
         for(int i =0; i< numOfChecks; i++){
             printf("%c", mutation[i]);
         }
-	printf(" weights:");
-	for(int i = 0; i<4; i++){
-	    printf("%d", weights[i]);
-	}
+        printf(" weights:");
+        for(int i = 0; i<4; i++){
+            printf("%d", weights[i]);
+        }
 	    // printf("tid: %d, base:%c, mut: %c\n", tid, baseSeq[tid], mutation[tid]);
         #endif
+
         // For each type of match/missmatch we will assign the score of the match directly instead of the the char.
         // Meaning: if we have a full match, we will assign the weight of the full match in the result array
         // instead of putting '*', which will make the final calculation quicker (less checks for the type of char in each index)
@@ -96,37 +97,31 @@ __global__ void determinePartialScores(char *baseSeq, char *mutation, int *cmpRe
         {
             // Complete match -> '*' in our assignment
             cmpRes[tid] = weights[0];
-//            atomicAdd(sum, weights[0]);
         }
         else if (checkConservativeGroup(baseSeq[tid],mutation[tid]))
         {
             // Conservative match -> ':' in our assignment
             cmpRes[tid] = weights[1];
- //           atomicAdd(sum, weights[1]);
         }
         else if (checkSemiConservativeGroup(baseSeq[tid], mutation[tid]))
         {
             // Semi-Conservative match -> '.' in our assignment
             cmpRes[tid] = weights[2];
-  //          atomicAdd(sum, weights[2]);
         }
         else
         {
             // Not a match -> ' ' in our assignment
             cmpRes[tid] = weights[3];
-   //         atomicAdd(sum, weights[3]);
         }
-        #ifdef DEBUG2
-    //    printf("Sum in kernel: %d", *sum);
-        #endif
+
         #ifdef DEBUG
+        // Check result in device
         printf(" cmp: ");
         for (int i = 0; i < numOfChecks; i++)
         {
             printf("%d,", cmpRes[i]);
         }
         printf("\n");
-        // printf("tid: %d, base:%c, mut: %c\n", tid, baseSeq[tid], mutation[tid]);
         #endif
     }
 }
@@ -174,15 +169,12 @@ void launchCuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes, 
     cudaError = cudaMemcpy(cuda_mutation, mutation, lenOfAugmented, cudaMemcpyHostToDevice);
     checkError(cudaError, "Failed to copy data from host to device seq1 -");
 
-//    cudaError = cudaMemcpy(cuda_weights, weights, WEIGHTS, cudaMemcpyHostToDevice);
- //   checkError(cudaError, "Failed to copy data from host to device w_cuda -");
-
     cudaError = cudaMemcpy(cuda_weights, weights, WEIGHTS * sizeof(int), cudaMemcpyHostToDevice);
     checkError(cudaError, "Failed to copy data from host to device w_cuda -");
 
     // Calculate the number of blocks
     int blocksPerGrid = (lenOfAugmented + MAX_THREADS - 1) / MAX_THREADS;
-    // int numOfChecks = 
+
     // Launch the Kernel
     determinePartialScores<<<blocksPerGrid, MAX_THREADS>>>(cuda_baseSeq, cuda_mutation, cuda_cmpRes, cuda_weights, lenOfAugmented);
     cudaError = cudaDeviceSynchronize();
@@ -195,28 +187,21 @@ void launchCuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes, 
     cudaError = cudaMemcpy(cmpRes, cuda_cmpRes, lenOfAugmented * sizeof(int), cudaMemcpyDeviceToHost);
     checkError(cudaError, "Failed to copy data device to host results -");
     
-    // cudaError = cudaMemcpy(sum, cuda_sum, 1, cudaMemcpyDeviceToHost);
-    // checkError(cudaError, "Failed to copy data device to host results -");
-
-    #ifdef DEBUG2
-    // printf("Sum: %d\n", *sum);
-    #endif
-    
-    #ifdef DEBUG2
+    #ifdef DEBUG
     printf(" cmp: ");
     for (int i = 0; i < lenOfAugmented; i++)
     {
         printf("%d,", cmpRes[i]);
     }
     printf("\n");
-    // printf("tid: %d, base:%c, mut: %c\n", tid, baseSeq[tid], mutation[tid]);
+    printf("tid: %d, base:%c, mut: %c\n", tid, baseSeq[tid], mutation[tid]);
     #endif
 
     cudaError = cudaFree(cuda_baseSeq);
-    checkError(cudaError, "Failed to free seq1 -");
+    checkError(cudaError, "Failed to free base sequence -");
 
     cudaError = cudaFree(cuda_mutation);
-    checkError(cudaError, "Failed to free seq2 -");
+    checkError(cudaError, "Failed to free mutation sequence -");
 
     cudaError = cudaFree(cuda_cmpRes);
     checkError(cudaError, "Failed to free results -");   
