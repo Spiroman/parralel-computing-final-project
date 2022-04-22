@@ -6,7 +6,9 @@
 
 // #define DEBUG 1
 // #define DEBUG_SCORE 1
-#define DEBUG_MUTATION 1
+// #define DEBUG_MUTATION 1
+#define DEBUG_RESULT 1
+
 // This function assumes the indices n, and k start with 1 rather than 0
 void createMutation(char *seq, int n, int k, int len, char *mutation)
 {    
@@ -52,7 +54,7 @@ void findOptimalMutationOffset(char *baseSeq, char *cmpSeq, int baseSeqLen, int 
                 #ifdef DEBUG_MUTATION
                 printf("cmpSeq: ");
                 for(int i=0; i<lenOfAugmented; i++){
-                    printf("%c", cmpSeq[i+offset]);
+                    printf("%c", baseSeq[i+offset]);
                 }
                 printf(" mutation: ");
                 for(int i=0; i<lenOfAugmented; i++){
@@ -105,7 +107,7 @@ void findOptimalMutationOffset(char *baseSeq, char *cmpSeq, int baseSeqLen, int 
     }
 
     #ifdef DEBUG_RESULT
-    printf("Max score:%d\n", tempResult.score);
+    printf("Max score:%d k:%d n:%d offset:%d\n", tempResult.score, tempResult.k, tempResult.n, tempResult.offset);
     #endif
     memcpy(result, &tempResult, 1);
     return;
