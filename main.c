@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
     displacements[3] = MPI_Aint_diff(displacements[3], base_address);
 
     MPI_Datatype types[4] = {MPI_INT, MPI_INT, MPI_INT, MPI_INT};
-    MPI_Type_create_struct(3, lengths, displacements, types, &MPI_RESULT);
+    MPI_Type_create_struct(4, lengths, displacements, types, &MPI_RESULT);
     MPI_Type_commit(&MPI_RESULT);
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -189,6 +189,7 @@ int main(int argc, char *argv[])
 
             MPI_Recv(&res, 1, MPI_RESULT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 
+	    printf("From worker:%d score:%d\n", status.MPI_SOURCE, res.score);
             #ifdef DEBUG
             printf("received res in root from %d\n", status.MPI_SOURCE);
             #endif

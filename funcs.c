@@ -106,9 +106,9 @@ void findOptimalMutationOffset(char *baseSeq, char *cmpSeq, int baseSeqLen, int 
         }
     }
 
+    memcpy(result, &tempResult, sizeof(Result));
     #ifdef DEBUG_RESULT
-    printf("Max score:%d k:%d n:%d offset:%d\n", tempResult.score, tempResult.k, tempResult.n, tempResult.offset);
+    printf("Max score:%d k:%d n:%d offset:%d\n", result->score, result->k, result->n, result->offset);
     #endif
-    memcpy(result, &tempResult, 1);
     return;
 }
