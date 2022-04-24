@@ -172,9 +172,15 @@ void launchCuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes, 
     int blocksPerGrid = (lenOfAugmented + MAX_THREADS - 1) / MAX_THREADS;
     
     #ifdef DEBUG_FINAL
-    printf("The number of blocks per grid is: %d\n", blocksPerGrid);
-    #endif
-    
+    // printf("The number of blocks per grid is: %d\n", blocksPerGrid);
+    printf("mutation: ")
+    for (int i = 0; i < lenOfAugmented; i++)
+    {
+        printf("%c", mutation[i]);
+    }
+    printf("\n")
+#endif
+
     // Launch the Kernel
     determinePartialScores<<<blocksPerGrid, MAX_THREADS>>>(cuda_baseSeq, cuda_mutation, cuda_cmpRes, cuda_weights, lenOfAugmented);
     cudaError = cudaDeviceSynchronize();
