@@ -8,6 +8,7 @@
 // #define DEBUG_SCORE 1
 // #define DEBUG_MUTATION 1
 // #define DEBUG_RESULT 1
+#define DEBUG_FINAL 1
 
 // This function assumes the indices n, and k start with 1 rather than 0
 void createMutation(char *seq, int n, int k, int len, char *mutation)
@@ -35,6 +36,10 @@ void findOptimalMutationOffset(char *baseSeq, char *cmpSeq, int baseSeqLen, int 
     // This ensures that all threads will catch results that are negative as well as best results. 
     // And yes, I checked it.
     tempResult.score = INT_MIN;
+
+    #ifdef DEBUG_FINAL
+    printf("Num of offsets: %d, len of augmented: %d\n", numOfOffsets, lenOfAugmented);
+    #endif
 
     // Each thread will have it's own copy of the results struct. At the end the maximum result and its values will be returned
     // In each execution we will check for each pair of mutations, for each possible offset of said mutation, what yields the best score.

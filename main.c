@@ -179,6 +179,14 @@ int main(int argc, char *argv[])
         printf("jobs sent: %d\n", jobs_sent);
         #endif
 
+
+        // Open file for output
+        // FILE *output;
+        // output = fopen("output.txt", "w");
+        // if (output == NULL){
+        //     printf("Couldn't open output.txt file. Exiting now.\n");
+        //     exit(1);
+        // }
         for (int jobs_done = 0; jobs_done <= numOfcmpSeqs-1; jobs_done++)
         {
             // Temporary holder for the result from the worker thread
@@ -187,9 +195,10 @@ int main(int argc, char *argv[])
             printf("jobs done: %d\n", jobs_done);
             #endif
 
-            MPI_Recv(&res, 1, MPI_RESULT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+            MPI_Recv(&res, 1, MPI_RESULT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);            
 
-	    printf("From worker:%d score:%d\n", status.MPI_SOURCE, res.score);
+	        printf("From worker:%d score:%d\n", status.MPI_SOURCE, res.score);
+
             #ifdef DEBUG
             printf("received res in root from %d\n", status.MPI_SOURCE);
             #endif

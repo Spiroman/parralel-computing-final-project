@@ -12,6 +12,7 @@
 #define MAX_THREADS 256
 #define WEIGHTS 4
 // #define DEBUG 1
+#define DEBUG_FINAL 1
 
 __device__ char conservativeGroup[GROUP_A_ROWS][GROUP_A_COLS] = {
     "NDEQ",
@@ -169,7 +170,11 @@ void launchCuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes, 
 
     // Calculate the number of blocks
     int blocksPerGrid = (lenOfAugmented + MAX_THREADS - 1) / MAX_THREADS;
-
+    
+    #ifdef DEBUG_FINAL
+    printf("The number of blocks per grid is: %d\n", blocksPerGrid);
+    #endif
+    
     // Launch the Kernel
     determinePartialScores<<<blocksPerGrid, MAX_THREADS>>>(cuda_baseSeq, cuda_mutation, cuda_cmpRes, cuda_weights, lenOfAugmented);
     cudaError = cudaDeviceSynchronize();
