@@ -8,4 +8,4 @@ clean:
 	rm -f *.o ./exec
 
 run:
-	mpiexec -n 3 ./exec < input.txt
+	mpiexec -n 4 ./exec < input.txt
