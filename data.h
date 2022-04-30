@@ -17,6 +17,14 @@ typedef struct
     int k;
     int offset;
     int score;
+    int order;
 } Result;
+
+typedef struct 
+{
+    int order;
+    char sequence[3001];
+} MutationJob;
+
 
 #endif

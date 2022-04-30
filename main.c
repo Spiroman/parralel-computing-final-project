@@ -15,12 +15,15 @@
 // #define DEBUG2 1
 // #define DEBUG3 1
 
+// Enum for task that are sent to child processes
 enum task
 {
     WORK,
     RESULT_SCORE,
     STOP
 };
+
+void create_mpi_structs(MPI_Datatype *MPI_RESULT, MPI_Datatype *MPI_MUTATION_JOB);
 
 int main(int argc, char *argv[])
 {
@@ -48,39 +51,11 @@ int main(int argc, char *argv[])
 
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    // Define a new MPI data type for the results
-    // Example taken from Rookie HPC
-    MPI_Datatype MPI_RESULT;
-    int lengths[4] = {1, 1, 1, 1};
-
-    // Calculate displacements
-    // In C, by default padding can be inserted between fields. MPI_Get_address will allow
-    // to get the address of each struct field and calculate the corresponding displacement
-    // relative to that struct base address. The displacements thus calculated will therefore
-    // include padding if any.
-    MPI_Aint displacements[4];
-    Result dummy_result;
-    MPI_Aint base_address;
-    // int n;
-    // int k;
-    // int offset;
-    // int score;
-    MPI_Get_address(&dummy_result, &base_address);
-    MPI_Get_address(&dummy_result.n, &displacements[0]);
-    MPI_Get_address(&dummy_result.k, &displacements[1]);
-    MPI_Get_address(&dummy_result.offset, &displacements[2]);
-    MPI_Get_address(&dummy_result.score, &displacements[3]);
-    displacements[0] = MPI_Aint_diff(displacements[0], base_address);
-    displacements[1] = MPI_Aint_diff(displacements[1], base_address);
-    displacements[2] = MPI_Aint_diff(displacements[2], base_address);
-    displacements[3] = MPI_Aint_diff(displacements[3], base_address);
-
-    MPI_Datatype types[4] = {MPI_INT, MPI_INT, MPI_INT, MPI_INT};
-    MPI_Type_create_struct(4, lengths, displacements, types, &MPI_RESULT);
-    MPI_Type_commit(&MPI_RESULT);
-
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+    MPI_Datatype MPI_RESULT;
+    MPI_Datatype MPI_MUTATION_JOB;
+    create_mpi_structs(&MPI_RESULT, &MPI_MUTATION_JOB);
 
     if (rank == ROOT)
     {
@@ -180,13 +155,6 @@ int main(int argc, char *argv[])
         #endif
 
 
-        // Open file for output
-        // FILE *output;
-        // output = fopen("output.txt", "w");
-        // if (output == NULL){
-        //     printf("Couldn't open output.txt file. Exiting now.\n");
-        //     exit(1);
-        // }
         for (int jobs_done = 0; jobs_done <= numOfcmpSeqs-1; jobs_done++)
         {
             // Temporary holder for the result from the worker thread
@@ -250,7 +218,14 @@ int main(int argc, char *argv[])
         #ifdef DEBUG
         printf("Exited recv loop in root\n");
         #endif
-        // Write outputfile
+        
+        // Open file for output
+        // FILE *output;
+        // output = fopen("output.txt", "w");
+        // if (output == NULL){
+        //     printf("Couldn't open output.txt file. Exiting now.\n");
+        //     exit(1);
+        // }
 
         // Free all variables.
     }
@@ -332,4 +307,60 @@ int main(int argc, char *argv[])
         #endif
     }
     MPI_Finalize();
+}
+
+void create_mpi_structs(MPI_Datatype *MPI_RESULT, MPI_Datatype *MPI_MUTATION_JOB)
+{
+    // Example taken from Rookie HPC
+    // https://www.rookiehpc.com/mpi/docs/mpi_type_create_struct.php
+    
+    // Define a new MPI data type for the results
+    // MPI_Datatype MPI_RESULT;
+    int lengths[5] = {1, 1, 1, 1, 1};
+
+    // Calculate displacements
+    // In C, by default padding can be inserted between fields. MPI_Get_address will allow
+    // to get the address of each struct field and calculate the corresponding displacement
+    // relative to that struct base address. The displacements thus calculated will therefore
+    // include padding if any.
+    MPI_Aint displacements[5];
+    Result dummy_result;
+    MPI_Aint base_address;
+    MPI_Get_address(&dummy_result, &base_address);
+    MPI_Get_address(&dummy_result.n, &displacements[0]);
+    MPI_Get_address(&dummy_result.k, &displacements[1]);
+    MPI_Get_address(&dummy_result.offset, &displacements[2]);
+    MPI_Get_address(&dummy_result.score, &displacements[3]);
+    MPI_Get_address(&dummy_result.order, &displacements[4]);
+    displacements[0] = MPI_Aint_diff(displacements[0], base_address);
+    displacements[1] = MPI_Aint_diff(displacements[1], base_address);
+    displacements[2] = MPI_Aint_diff(displacements[2], base_address);
+    displacements[3] = MPI_Aint_diff(displacements[3], base_address);
+    displacements[4] = MPI_Aint_diff(displacements[4], base_address);
+
+    MPI_Datatype types[5] = {MPI_INT, MPI_INT, MPI_INT, MPI_INT, MPI_INT};
+    MPI_Type_create_struct(5, lengths, displacements, types, MPI_RESULT);
+    MPI_Type_commit(MPI_RESULT);
+
+    // Define a new MPI data type for the job
+    // MPI_Datatype MPI_MUTATION_JOB;
+    int j_lengths[2] = {1, 3001};
+
+    // Calculate displacements
+    // In C, by default padding can be inserted between fields. MPI_Get_address will allow
+    // to get the address of each struct field and calculate the corresponding displacement
+    // relative to that struct base address. The displacements thus calculated will therefore
+    // include padding if any.
+    MPI_Aint j_displacements[2];
+    MPI_Aint j_base_address;
+    MutationJob dummy_job;
+    MPI_Get_address(&dummy_result, &j_base_address);
+    MPI_Get_address(&dummy_job.order, &j_displacements[0]);
+    MPI_Get_address(&dummy_job.sequence, &j_displacements[1]);
+    j_displacements[0] = MPI_Aint_diff(j_displacements[0], j_base_address);
+    j_displacements[1] = MPI_Aint_diff(j_displacements[1], j_base_address);
+
+    MPI_Datatype j_types[2] = {MPI_INT, MPI_CHAR};
+    MPI_Type_create_struct(2, lengths, displacements, types, MPI_MUTATION_JOB);
+    MPI_Type_commit(MPI_MUTATION_JOB);
 }
