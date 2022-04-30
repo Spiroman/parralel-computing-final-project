@@ -12,7 +12,7 @@
 #define MAX_THREADS 256
 #define WEIGHTS 4
 // #define DEBUG 1
-#define DEBUG_FINAL 1
+// #define DEBUG_FINAL 1
 
 __device__ char conservativeGroup[GROUP_A_ROWS][GROUP_A_COLS] = {
     "NDEQ",
@@ -173,13 +173,13 @@ void launchCuda(char *baseSeq, char *mutation, int lenOfAugmented, int *cmpRes, 
     
     #ifdef DEBUG_FINAL
     // printf("The number of blocks per grid is: %d\n", blocksPerGrid);
-    printf("mutation: ")
+    printf("mutation: ");
     for (int i = 0; i < lenOfAugmented; i++)
     {
         printf("%c", mutation[i]);
     }
-    printf("\n")
-#endif
+    printf("\n");
+    #endif
 
     // Launch the Kernel
     determinePartialScores<<<blocksPerGrid, MAX_THREADS>>>(cuda_baseSeq, cuda_mutation, cuda_cmpRes, cuda_weights, lenOfAugmented);
